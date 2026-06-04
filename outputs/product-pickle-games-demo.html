@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Product Pickle Games Demo</title>
+  <style>
+    :root { font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #111827; background: #f7f7f4; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-width: 320px; }
+    button, select { font: inherit; }
+    button { touch-action: manipulation; }
+    .shell { width: min(1120px, 100%); margin: 0 auto; padding: 24px; }
+    .topbar, .game-head, .play-area, .score-pills, .actions, .tabs, .daily-badge, .chain-goal { display: flex; gap: 14px; }
+    .topbar, .game-head { align-items: center; justify-content: space-between; }
+    .eyebrow { margin: 0 0 4px; color: #64748b; font-size: .78rem; font-weight: 800; text-transform: uppercase; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { margin-bottom: 0; font-size: clamp(2rem, 8vw, 4.8rem); line-height: .95; }
+    h2 { margin-bottom: 0; font-size: clamp(1.8rem, 6vw, 3.4rem); }
+    .daily-badge { align-items: center; padding: 10px 14px; border: 1px solid #d7d3c8; border-radius: 8px; background: #fff; font-weight: 800; }
+    .tabs { margin: 0 0 20px; overflow-x: auto; padding-bottom: 4px; }
+    .tabs button, .actions button { min-height: 44px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; color: #111827; cursor: pointer; font-weight: 800; }
+    .tabs button { flex: 0 0 auto; padding: 10px 14px; }
+    .tabs button.active { border-color: #111827; background: #111827; color: #fff; }
+    .game-head { margin-bottom: 18px; }
+    .score-pills { flex-wrap: wrap; justify-content: flex-end; }
+    .score-pills span { padding: 8px 11px; border-radius: 999px; background: #e6f4f1; color: #0f766e; font-weight: 800; }
+    .panel { flex: 1 1 0; min-width: 0; padding: 18px; border: 1px solid #dedbd1; border-radius: 8px; background: #fff; box-shadow: 0 18px 50px rgba(17,24,39,.08); }
+    .fold-steps { display: grid; gap: 10px; margin: 20px 0; }
+    .fold-steps div { display: grid; grid-template-columns: 30px 1fr; align-items: center; gap: 10px; padding: 10px; border-radius: 8px; background: #f4f4ef; }
+    .fold-steps strong { display: grid; width: 30px; height: 30px; place-items: center; border-radius: 50%; background: #111827; color: #fff; }
+    .fold-preview, .fold-grid { display: grid; grid-template-columns: repeat(4, 1fr); aspect-ratio: 1; }
+    .fold-preview { width: min(300px, 100%); border: 2px solid #111827; background: #fafafa; }
+    .fold-preview span { position: relative; border: 1px solid #c7c3b8; }
+    .fold-preview .crease { background: #eee8dc; }
+    .fold-preview .punch::after { position: absolute; inset: 32%; border-radius: 50%; background: #111827; content: ""; }
+    .fold-grid { width: min(430px, 100%); margin: 0 auto 16px; border: 2px solid #111827; }
+    .fold-grid button { display: grid; min-height: 64px; place-items: center; border: 1px solid #c7c3b8; background: #fffdf8; cursor: pointer; font-size: 1.6rem; }
+    .fold-grid button.selected { background: #fef3c7; }
+    .fold-grid button.revealed { background: #ccfbf1; }
+    .status { min-height: 48px; margin: 0 0 14px; padding: 12px; border-radius: 8px; background: #f1f5f9; color: #334155; font-weight: 750; }
+    .status.win { background: #dcfce7; color: #166534; }
+    .actions { flex-wrap: wrap; }
+    .actions button { padding: 10px 14px; }
+    .actions .primary { border-color: #0f766e; background: #0f766e; color: #fff; }
+    button:disabled { cursor: not-allowed; opacity: .48; }
+    .rules { margin-top: 18px; padding: 18px; border-radius: 8px; background: #111827; color: #fff; }
+    .rules div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 18px; }
+    .rules p { margin-bottom: 0; color: #e5e7eb; }
+    .chain-goal { justify-content: center; align-items: center; margin-bottom: 18px; font-size: clamp(1.5rem, 6vw, 3rem); }
+    .chain-inputs { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; margin-bottom: 14px; }
+    .chain-inputs select, .locked-word { width: 100%; min-height: 52px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; text-align: center; font-weight: 800; }
+    .locked-word { display: grid; place-items: center; background: #fef3c7; }
+    .word-bank { display: flex; flex-wrap: wrap; gap: 8px; }
+    .word-bank span { padding: 8px 10px; border-radius: 999px; background: #eef2ff; color: #3730a3; font-weight: 800; }
+    .clues { display: grid; gap: 10px; margin: 0; padding-left: 22px; }
+    .clues li { padding: 10px; border-radius: 8px; background: #f4f4ef; font-weight: 700; }
+    .logic-slots { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin-bottom: 14px; }
+    .slot, .tray button { border: 1px solid #d1d5db; border-radius: 8px; background: #fff; cursor: pointer; }
+    .slot { display: grid; gap: 8px; min-height: 112px; padding: 12px 8px; place-items: center; }
+    .slot i { display: block; width: 34px; height: 34px; border-radius: 50%; background: var(--piece); }
+    .tray { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+    .tray button { min-height: 46px; padding: 8px 12px; border-color: var(--piece); box-shadow: inset 0 -4px 0 var(--piece); font-weight: 900; }
+    @media (max-width: 780px) {
+      .shell { padding: 16px; }
+      .topbar, .game-head, .play-area { flex-direction: column; align-items: stretch; }
+      .score-pills { justify-content: flex-start; }
+      .rules div, .chain-inputs { grid-template-columns: 1fr; }
+      .logic-slots { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="topbar">
+      <div><p class="eyebrow">Week 1 puzzle concepts</p><h1>Product Pickle Games</h1></div>
+      <div class="daily-badge">2-5 min daily demos</div>
+    </section>
+    <nav class="tabs">
+      <button class="active" data-tab="fold">Fold</button>
+      <button data-tab="chain">ChainLink</button>
+      <button data-tab="logic">Logic Line</button>
+    </nav>
+    <div id="app"></div>
+  </main>
+  <script>
+    const state = {
+      active: "fold",
+      foldSelected: new Set(),
+      foldAnswer: new Set(["0,0","0,2","1,1","1,3","2,0","2,2","3,1","3,3"]),
+      foldMistakes: 0,
+      foldPenalty: 0,
+      foldMessage: "Mark the holes you predict after the paper unfolds.",
+      foldSolved: false,
+      chain: ["Rain", "", "", "", "", "Cinema"],
+      chainMessage: "Choose words that make a valid semantic chain.",
+      chainSolved: false,
+      logicSlots: ["", "", "", "", ""],
+      logicChecks: 0,
+      logicMessage: "Arrange the colors, then check the clue score.",
+      logicSolved: false
+    };
+    const wordBank = ["cloud","weather","forecast","screen","movie","cinema","umbrella","storm","camera","ticket"];
+    const links = new Set(["rain>cloud","rain>forecast","cloud>weather","weather>forecast","forecast>screen","screen>movie","movie>cinema","rain>umbrella","umbrella>storm","storm>weather","screen>camera","camera>movie","movie>ticket","ticket>cinema"]);
+    const colors = { Red:"#ef4444", Blue:"#2563eb", Green:"#16a34a", Yellow:"#f59e0b", Purple:"#7c3aed" };
+    const pieces = ["Red","Blue","Green","Yellow","Purple"];
+    const rules = {
+      fold: ["The sheet is a 4 x 4 grid. Each selected tile means a visible hole after unfolding.","Follow folds in order. All layers are punched at the shown folded positions.","Win by marking every final hole and no extra tiles.","Three wrong submissions end the round. Hints reveal one missed tile and add 20 seconds.","Daily score = solve time + penalties. Lower score is better."],
+      chain: ["Build a chain from the start word to the end word using only the word bank.","Every neighboring pair must be an approved relationship from the puzzle graph.","No repeated words. Finish within the step limit.","A shorter valid chain ranks higher. Ties are sorted by time.","Editor-approved links prevent vague association loopholes."],
+      logic: ["Place each color exactly once in the five slots.","A check tells how many clues are satisfied, not which ones.","Win only when all clues are satisfied and all slots are filled.","You have five checks. Fewer checks means a better score.","If more than one solution exists, the daily puzzle is rejected before launch."]
+    };
+    const app = document.querySelector("#app");
+    document.querySelectorAll(".tabs button").forEach(btn => btn.addEventListener("click", () => {
+      state.active = btn.dataset.tab;
+      document.querySelectorAll(".tabs button").forEach(x => x.classList.toggle("active", x === btn));
+      render();
+    }));
+    const key = (r, c) => `${r},${c}`;
+    const missingFold = () => [...state.foldAnswer].filter(x => !state.foldSelected.has(x)).length;
+    const extraFold = () => [...state.foldSelected].filter(x => !state.foldAnswer.has(x)).length;
+    function rulesHtml(kind, title) { return `<section class="rules"><h3>${title}</h3><div>${rules[kind].map(r => `<p>✓ ${r}</p>`).join("")}</div></section>`; }
+    function renderHeader(name, tag, score) {
+      return `<section class="game-head"><div><p class="eyebrow">${tag}</p><h2>${name}</h2></div><div class="score-pills">${score.map(s => `<span>${s}</span>`).join("")}</div></section>`;
+    }
+    function renderFold() {
+      app.innerHTML = renderHeader("Fold", "Think before you unfold.", [`Holes ${8 - missingFold()} / 8`, `Penalty ${state.foldPenalty}s`]) + `
+        <section class="play-area">
+          <div class="panel"><h3>Daily Fold #001</h3><p>Predict the final holes after all folds open.</p>
+            <div class="fold-steps"><div><strong>1</strong><span>Fold left half onto right</span></div><div><strong>2</strong><span>Fold top half down</span></div><div><strong>3</strong><span>Punch two holes</span></div></div>
+            <div class="fold-preview">${Array.from({length:16}, (_,i) => `<span class="${Math.floor(i/4)===1||i%4===1?"crease":""} ${i===10||i===15?"punch":""}"></span>`).join("")}</div>
+          </div>
+          <div class="panel"><h3>Unfolded answer board</h3><div class="fold-grid">${Array.from({length:16}, (_,i) => {
+            const k = key(Math.floor(i/4), i%4);
+            const classes = `${state.foldSelected.has(k) ? "selected" : ""} ${state.foldSolved && state.foldAnswer.has(k) ? "revealed" : ""}`;
+            return `<button class="${classes}" data-cell="${k}">${state.foldSelected.has(k) || state.foldSolved && state.foldAnswer.has(k) ? "●" : ""}</button>`;
+          }).join("")}</div><p class="status ${state.foldSolved ? "win" : ""}">${state.foldMessage}</p>
+          <div class="actions"><button class="primary" id="foldSubmit">Submit</button><button id="foldHint">Hint</button><button id="foldReset">Reset</button></div></div>
+        </section>${rulesHtml("fold", "Fold launch rules")}`;
+      app.querySelectorAll("[data-cell]").forEach(btn => btn.onclick = () => {
+        if (state.foldSolved || state.foldMistakes >= 3) return;
+        const k = btn.dataset.cell;
+        state.foldSelected.has(k) ? state.foldSelected.delete(k) : state.foldSelected.add(k);
+        state.foldMessage = "Selection updated. Submit when every unfolded hole is marked.";
+        renderFold();
+      });
+      app.querySelector("#foldSubmit").onclick = () => {
+        const m = missingFold(), e = extraFold();
+        if (m === 0 && e === 0) { state.foldSolved = true; state.foldMessage = "Perfect unfold. This would count toward the daily streak."; }
+        else { state.foldMistakes++; state.foldPenalty += 15; state.foldMessage = state.foldMistakes >= 3 ? "Round locked after 3 misses. Reset to try again." : `Not yet: ${m} missing, ${e} extra.`; }
+        renderFold();
+      };
+      app.querySelector("#foldHint").onclick = () => { const m = [...state.foldAnswer].find(x => !state.foldSelected.has(x)); if (m) { state.foldSelected.add(m); state.foldPenalty += 20; state.foldMessage = "Hint used: one correct hole was revealed."; renderFold(); } };
+      app.querySelector("#foldReset").onclick = () => { state.foldSelected = new Set(); state.foldMistakes = 0; state.foldPenalty = 0; state.foldMessage = "Mark the holes you predict after the paper unfolds."; state.foldSolved = false; renderFold(); };
+    }
+    function renderChain() {
+      const steps = state.chain.filter(Boolean).length - 1;
+      app.innerHTML = renderHeader("ChainLink", "Connect ideas. Find the shortest chain.", [`Links ${Math.max(steps, 0)}`, "Best 4"]) + `
+        <section class="play-area"><div class="panel"><div class="chain-goal"><strong>Rain</strong><span>→</span><strong>Cinema</strong></div>
+        <div class="chain-inputs">${state.chain.map((w,i) => i===0 || i===5 ? `<div class="locked-word">${w}</div>` : `<select data-chain="${i}"><option value="">Pick link</option>${wordBank.filter(x => x !== "cinema").map(x => `<option ${w===x?"selected":""}>${x}</option>`).join("")}</select>`).join("")}</div>
+        <p class="status ${state.chainSolved ? "win" : ""}">${state.chainMessage}</p><div class="actions"><button class="primary" id="chainCheck">Validate</button><button id="chainReset">Reset</button></div></div>
+        <div class="panel"><h3>Approved word bank</h3><div class="word-bank">${wordBank.map(w => `<span>${w}</span>`).join("")}</div></div></section>${rulesHtml("chain", "ChainLink launch rules")}`;
+      app.querySelectorAll("[data-chain]").forEach(select => select.onchange = e => { state.chain[Number(select.dataset.chain)] = e.target.value; state.chainMessage = "Chain updated. Validate when ready."; renderChain(); });
+      app.querySelector("#chainCheck").onclick = () => {
+        const clean = state.chain.filter(Boolean).map(w => w.toLowerCase());
+        if (new Set(clean).size !== clean.length) state.chainMessage = "No repeated words are allowed.";
+        else if (clean.length - 1 > 5) state.chainMessage = "Too many links. Shorten the chain.";
+        else {
+          const bad = clean.slice(0, -1).find((w, i) => !links.has(`${w}>${clean[i+1]}`));
+          if (bad) state.chainMessage = "One neighboring pair is not an approved link.";
+          else { state.chainSolved = true; state.chainMessage = clean.length - 1 <= 4 ? "Excellent. You matched the target shortest chain." : "Valid chain. Try fewer links for the leaderboard."; }
+        }
+        renderChain();
+      };
+      app.querySelector("#chainReset").onclick = () => { state.chain = ["Rain","","","","","Cinema"]; state.chainMessage = "Choose words that make a valid semantic chain."; state.chainSolved = false; renderChain(); };
+    }
+    function clueScore() {
+      const s = state.logicSlots, red = s.indexOf("Red"), purple = s.indexOf("Purple"), blue = s.indexOf("Blue");
+      return [s[0] === "Green", red >= 0 && purple === red + 1, blue > purple && purple >= 0, s[2] !== "Yellow", purple > 0 && purple < 4].filter(Boolean).length;
+    }
+    function renderLogic() {
+      const tray = pieces.filter(p => !state.logicSlots.includes(p));
+      app.innerHTML = renderHeader("Logic Line", "Arrange pieces. Satisfy every clue.", [`Checks ${state.logicChecks}/5`, `Filled ${state.logicSlots.filter(Boolean).length}/5`]) + `
+        <section class="play-area"><div class="panel"><h3>Clues</h3><ol class="clues"><li>Green is in the first position.</li><li>Red is immediately left of Purple.</li><li>Blue is somewhere to the right of Purple.</li><li>Yellow is not in the middle.</li><li>Purple is not at either end.</li></ol></div>
+        <div class="panel"><h3>Sequence</h3><div class="logic-slots">${state.logicSlots.map((p,i) => `<button class="slot" data-slot="${i}" style="--piece:${p ? colors[p] : "#d1d5db"}"><i></i><strong>${p || "Empty"}</strong></button>`).join("")}</div>
+        <div class="tray">${tray.map(p => `<button data-piece="${p}" style="--piece:${colors[p]}">${p}</button>`).join("")}</div><p class="status ${state.logicSolved ? "win" : ""}">${state.logicMessage}</p>
+        <div class="actions"><button class="primary" id="logicCheck">Check</button><button id="logicReset">Reset</button></div></div></section>${rulesHtml("logic", "Logic Line launch rules")}`;
+      app.querySelectorAll("[data-slot]").forEach(btn => btn.onclick = () => { state.logicSlots[Number(btn.dataset.slot)] = ""; renderLogic(); });
+      app.querySelectorAll("[data-piece]").forEach(btn => btn.onclick = () => { const i = state.logicSlots.indexOf(""); if (i >= 0) { state.logicSlots[i] = btn.dataset.piece; renderLogic(); } });
+      app.querySelector("#logicCheck").onclick = () => {
+        if (state.logicChecks >= 5) return;
+        state.logicChecks++;
+        const score = clueScore();
+        if (state.logicSlots.filter(Boolean).length < 5) state.logicMessage = `Only ${state.logicSlots.filter(Boolean).length}/5 slots filled. ${score}/5 clues currently pass.`;
+        else if (score === 5) { state.logicSolved = true; state.logicMessage = `Solved in ${state.logicChecks} clue checks. Clean deduction.`; }
+        else state.logicMessage = `${score}/5 clues satisfied. Keep rearranging.`;
+        renderLogic();
+      };
+      app.querySelector("#logicReset").onclick = () => { state.logicSlots = ["","","","",""]; state.logicChecks = 0; state.logicMessage = "Arrange the colors, then check the clue score."; state.logicSolved = false; renderLogic(); };
+    }
+    function render() { state.active === "fold" ? renderFold() : state.active === "chain" ? renderChain() : renderLogic(); }
+    render();
+  </script>
+</body>
+</html>
