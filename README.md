@@ -20,13 +20,13 @@ Then open the local URL printed by Vite.
 ## Deploy on GitHub Pages
 
 This project is configured for a GitHub repository named `product-pickle-games`.
-After pushing to the `main` branch, GitHub Actions builds the Svelte app and deploys
-the `dist` folder to GitHub Pages.
+The live site is served from the `gh-pages` branch, which contains the built
+`dist` files.
 
-Expected live URL:
+Live URL:
 
 ```text
-https://<your-github-username>.github.io/product-pickle-games/
+https://kesava-bobbili.github.io/product-pickle-games/
 ```
 
 ## No-install demo
